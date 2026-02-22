@@ -6,6 +6,7 @@ import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
+    Alert,
     Animated,
     Dimensions,
     KeyboardAvoidingView,
@@ -85,22 +86,30 @@ export default function AddExpenseSheet({
         const num = parseFloat(amount);
         if (!num || num <= 0) {
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+            Alert.alert('Invalid Amount', 'Please enter a valid amount greater than 0.');
             return;
         }
         setSaving(true);
+        console.log('[Save] Starting save...', { amount: num, category, paymentMethod, note });
         try {
-            await addExpense({
+            const id = await addExpense({
                 amount: num,
                 category,
                 payment_method: paymentMethod,
                 note: note.trim(),
                 date: new Date().toISOString(),
             });
+            console.log('[Save] Expense saved successfully with id:', id);
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
             onSaved();
             onClose();
-        } catch (e) {
+        } catch (e: any) {
+            console.error('[Save] Failed to save expense:', e);
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+            Alert.alert(
+                'Save Failed',
+                `Could not save expense: ${e?.message || String(e)}\n\nPlease try again.`
+            );
         } finally {
             setSaving(false);
         }
